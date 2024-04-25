@@ -8,5 +8,5 @@ Generate a GitVersion config using Pkl.
 
 Make a new source file amending `strings.pkl` and override `localizable`:
 ```pkl
-amends "package://github.com/BenMMcLean/pkl-gitversion/releases/download/v0.1.0-alpha.5/pkl-gitversion@0.1.0-alpha.5#/schema.pkl"
+amends "package://github.com/BenMMcLean/pkl-gitversion/releases/download/v0.1.0-alpha.12/pkl-gitversion@0.1.0-alpha.12#/schema.pkl"
 ```
