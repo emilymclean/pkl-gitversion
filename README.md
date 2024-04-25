@@ -6,7 +6,6 @@ Generate a GitVersion config using Pkl.
 ![Stable](https://img.shields.io/github/v/release/BenMMcLean/pkl-gitversion?label=Stable)
 ![Preview](https://img.shields.io/github/v/release/BenMMcLean/pkl-gitversion?label=Preview&include_prereleases)
 
-Make a new source file amending `strings.pkl` and override `localizable`:
 ```pkl
 amends "package://github.com/BenMMcLean/pkl-gitversion/releases/download/v0.1.0-alpha.21/pkl-gitversion@0.1.0-alpha.21#/schema.pkl"
 ```
