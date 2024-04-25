@@ -70,10 +70,6 @@ jobs:
         name: Release ${{ needs.version.outputs.version }}
         draft: false
         prerelease: ${{ github.ref != 'refs/heads/main' }}
-    - uses: tvdias/github-tagger@v0.0.1
-      with:
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        tag: pkl-gitversion@${{ needs.version.outputs.version }}
   version-update:
     permissions:
       contents: write
