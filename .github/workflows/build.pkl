@@ -5,3 +5,4 @@ modules = new Listing {
 }
 
 versionUpdateCommit = true
+extraTags = false

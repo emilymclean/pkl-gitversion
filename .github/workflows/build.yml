@@ -1,0 +1,127 @@
+name: Build
+'on':
+  pull_request:
+    branches:
+    - main
+    - develop
+  push:
+    branches:
+    - main
+    - develop
+    - release/**
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gitversion.outputs.semVer }}
+      current-version: ${{ env.CURRENT_VERSION }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.6
+      with:
+        versionSpec: 5.x
+    - name: Get current Pkl version
+      run: |-
+        VER=$(cat .version)
+        echo "CURRENT_VERSION=$VER" >> $GITHUB_ENV
+    - id: gitversion
+      name: Use GitVersion
+      uses: gittools/actions/gitversion/execute@v0.9.6
+      with:
+        useConfigFile: true
+        configFilePath: ./gitversion.yml
+    - name: Display SemVer
+      run: 'echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"'
+  should-release:
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.release.outputs.proceed && github.event_name != 'pull_request' }}
+    steps:
+    - id: release
+      uses: phish108/release-check@1.0.15
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        protected-paths: |-
+          README.md
+          .version
+  release:
+    permissions:
+      contents: write
+    needs:
+    - version
+    - should-release
+    if: needs.should-release.outputs.proceed
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - id: create_release
+      name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: v${{ needs.version.outputs.version }}
+        name: Release ${{ needs.version.outputs.version }}
+        draft: false
+        prerelease: ${{ github.ref != 'refs/heads/main' }}
+  version-update:
+    permissions:
+      contents: write
+    needs:
+    - version
+    - should-release
+    if: needs.should-release.outputs.proceed
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - uses: DamianReeves/write-file-action@master
+      with:
+        path: .version
+        write-mode: overwrite
+        contents: ${{ needs.version.outputs.version }}
+    - uses: jacobtomlinson/gha-find-replace@v3
+      with:
+        find: ${{ needs.version.outputs.current-version }}
+        replace: ${{ needs.version.outputs.version }}
+        regex: false
+        include: README.md
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Bump version number from ${{ needs.version.outputs.current-version }} to ${{ needs.version.outputs.version }}
+  upload-project:
+    permissions:
+      contents: write
+    needs:
+    - version
+    - release
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Install Pkl
+      uses: pkl-community/setup-pkl@v0
+      with:
+        pkl-version: 0.25.3
+    - uses: DamianReeves/write-file-action@master
+      with:
+        path: .version
+        write-mode: overwrite
+        contents: ${{ needs.version.outputs.version }}
+    - name: Package project
+      run: pkl project package src
+    - name: Upload Release Artifact
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |-
+        TAG=pkl-gitversion@${{ needs.version.outputs.version }}
+        gh release upload v${{ needs.version.outputs.version }} .out/$TAG/*
+        gh release edit v${{ needs.version.outputs.version }} -t v${{ needs.version.outputs.version }}
