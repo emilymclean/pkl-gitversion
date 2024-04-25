@@ -7,5 +7,5 @@ Generate a GitVersion config using Pkl.
 ![Preview](https://img.shields.io/github/v/release/BenMMcLean/pkl-gitversion?label=Preview&include_prereleases)
 
 ```pkl
-amends "package://github.com/BenMMcLean/pkl-gitversion/releases/download/v0.1.0-alpha.21/pkl-gitversion@0.1.0-alpha.21#/schema.pkl"
+amends "package://github.com/BenMMcLean/pkl-gitversion/releases/download/v0.1.0-alpha.23/pkl-gitversion@0.1.0-alpha.23#/schema.pkl"
 ```
