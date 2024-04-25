@@ -1,7 +1,8 @@
 amends "pkl/build-pkl.pkl"
 
 modules = new Listing {
-    // "pkl-gitversion"
+    "pkl-gitversion"
 }
 
 versionUpdateCommit = true
+extraTags = false
