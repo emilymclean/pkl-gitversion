@@ -1,0 +1,7 @@
+amends "pkl/build-pkl.pkl"
+
+modules = new Listing {
+    "pkl-gitversion"
+}
+
+versionUpdateCommit = true
