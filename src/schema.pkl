@@ -1,0 +1,55 @@
+
+`next-version`: String?
+`assembly-versioning-scheme`: VersioningScheme?
+`assembly-file-versioning-scheme`: VersioningScheme?
+`assembly-file-versioning-format`: String?
+`assembly-versioning-format`: String?
+`assembly-informational-format`: String?
+mode: Mode
+increment: Increment?
+`continuous-delivery-fallback-tag`: String?
+`tag-prefix`: String?
+`major-version-bump-message`: String?
+`minor-version-bump-message`: String?
+`patch-version-bump-message`: String?
+`no-bump-message`: String?
+`legacy-semver-padding`: Int?
+`build-metadata-padding`: Int?
+`commits-since-version-source-padding`: Int?
+`tag-pre-release-weight`: Int?
+`commit-message-incrementing`: EnabledBoolean?
+`commit-date-format`: String
+ignore: Ignore?
+`merge-message-formats`: Mapping<String, String>?
+`update-build-number`: Boolean
+branches: Mapping<String, BranchConfig>(length > 0)
+
+class BranchConfig {
+    regex: String?
+    `source-branches`: Listing<String>?
+    mode: Mode?
+    tag: Tag?
+    increment: Increment?
+    `prevent-increment-of-merged-branch-version`: Boolean
+    `tag-number-pattern`: String?
+    `track-merge-target`: Boolean
+    `tracks-release-branches`: Boolean
+    `is-release-branch`: Boolean
+    `is-mainline`: Boolean?
+    `pre-release-weight`: Int
+}
+
+class Ignore {
+    sha: Listing<String(matches(shaMatch))>?
+    `commits-before`: String(matches(dateMatch))?
+}
+
+typealias VersioningScheme = "MajorMinorPatchTag" | "MajorMinorPatch" | "MajorMinor" | "Major" | "None"
+typealias Mode = "ContinuousDelivery" | "ContinuousDeployment" | "Mainline"
+typealias Increment = "Major" | "Minor" | "Patch" | "None" | "Inherit"
+typealias EnabledBoolean = "Enabled" | "Disabled"
+typealias Tag = "useBranchName" | String
+
+local const versionCode = Regex("^(\\d+\\.){2}\\d+$")
+local const shaMatch = Regex("^[a-f0-9]{40}$")
+local const dateMatch = Regex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$")
