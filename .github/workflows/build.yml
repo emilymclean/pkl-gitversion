@@ -1,4 +1,4 @@
-name: Build
+name: Build Pkl
 'on':
   pull_request:
     branches:
@@ -14,27 +14,31 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.gitversion.outputs.semVer }}
-      current-version: ${{ env.CURRENT_VERSION }}
+      versionCode: ${{ steps.run-number.outputs.versionCode }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0.9.6
+      uses: gittools/actions/gitversion/setup@v3.0.0
       with:
         versionSpec: 5.x
-    - name: Get current Pkl version
-      run: |-
-        VER=$(cat .version)
-        echo "CURRENT_VERSION=$VER" >> $GITHUB_ENV
     - id: gitversion
       name: Use GitVersion
-      uses: gittools/actions/gitversion/execute@v0.9.6
+      uses: gittools/actions/gitversion/execute@v3.0.0
       with:
         useConfigFile: true
         configFilePath: ./gitversion.yml
-    - name: Display SemVer
-      run: 'echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"'
+    - id: run-number
+      run: |-
+        current_run_number=${{ github.run_number }}
+        new_number=$((current_run_number+0))
+        echo "versionCode=${new_number}" >> $GITHUB_OUTPUT
+    - name: Generate Job Summary
+      run: |-
+        echo "# Version Info
+        Semantic Version: ${{ steps.gitversion.outputs.semVer }}
+        Version Number: ${{ steps.run-number.outputs.versionCode }}" >> $GITHUB_STEP_SUMMARY
   should-release:
     runs-on: ubuntu-latest
     outputs:
@@ -58,9 +62,13 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - name: Create tag for release
+      uses: rickstaa/action-create-tag@v1
+      with:
+        tag: v${{ needs.version.outputs.version }}
     - id: create_release
       name: Create Release
       uses: softprops/action-gh-release@v2
@@ -70,32 +78,6 @@ jobs:
         name: Release ${{ needs.version.outputs.version }}
         draft: false
         prerelease: ${{ github.ref != 'refs/heads/main' }}
-  version-update:
-    permissions:
-      contents: write
-    needs:
-    - version
-    - should-release
-    if: needs.should-release.outputs.proceed
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - uses: DamianReeves/write-file-action@master
-      with:
-        path: .version
-        write-mode: overwrite
-        contents: ${{ needs.version.outputs.version }}
-    - uses: jacobtomlinson/gha-find-replace@v3
-      with:
-        find: ${{ needs.version.outputs.current-version }}
-        replace: ${{ needs.version.outputs.version }}
-        regex: false
-        include: README.md
-    - uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: Bump version number from ${{ needs.version.outputs.current-version }} to ${{ needs.version.outputs.version }}
   upload-project:
     permissions:
       contents: write
@@ -104,18 +86,14 @@ jobs:
     - release
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
     - name: Install Pkl
       uses: pkl-community/setup-pkl@v0
       with:
         pkl-version: 0.25.3
-    - uses: DamianReeves/write-file-action@master
-      with:
-        path: .version
-        write-mode: overwrite
-        contents: ${{ needs.version.outputs.version }}
+    - run: echo "${{ needs.version.outputs.version }}" > .version
     - name: Package project
       run: pkl project package src
     - name: Upload Release Artifact
