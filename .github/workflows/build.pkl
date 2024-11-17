@@ -1,4 +1,4 @@
-amends "pkl/src/build-pkl.pkl"
+amends "package://components.emilym.cl/actions/actions@0.1.4#/build-pkl.pkl"
 
 modules = new Listing {
     "pkl-gitversion"
